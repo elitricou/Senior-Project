@@ -1,2 +1,3 @@
 # Senior-Project
-My ECE445 Senior Project, Lab Notebook
+Cat Laser Tower, Lab Notebook
+
