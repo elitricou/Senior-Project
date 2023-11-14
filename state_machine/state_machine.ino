@@ -33,8 +33,8 @@
 
 #include <TimeLib.h>
 #include "LedControl.h"
-LedControl lc = LedControl(11, 13, 10, 1);
-byte dig[] = { 0b00111111, 0b00000110, 0b01011011, 0b01001111, 0b01100110, 0b01101101, 0b01111101, 0b00000111, 0b01111111, 0b01100111 };
+LedControl lc = LedControl(DISPLAY_PIN, CLK_PIN, CLOCK_CS, 1);
+//byte dig[] = { 0b00111111, 0b00000110, 0b01011011, 0b01001111, 0b01100110, 0b01101101, 0b01111101, 0b00000111, 0b01111111, 0b01100111 };
 
 SoftwareSerial soft_serial(MOTOR_RX, MOTOR_TX);  //UART RX/TX
 #define DXL_SERIAL Serial
@@ -56,28 +56,8 @@ void setMotor(int phi, int theta) {
   dxl.setGoalPosition(DXL_V, theta, UNIT_DEGREE);
 }
 
-void showdigit(int pos, int digit, bool point) {
-  for (int i = 0; i < 7; i++) {
-    if (bitRead(dig[digit], i)) lc.setLed(0, i, pos, true);
-  }
-  if (point) lc.setLed(0, 7, pos, true);
-}
-
-void showtime(int hours, int mins) {
-  lc.clearDisplay(0);
-
-  int first = hours / 10;
-  int second = hours % 10;
-  int third = mins / 10;
-  int fourth = mins % 10;
-  showdigit(1, first, false);
-  showdigit(2, second, true);
-  showdigit(3, third, true);
-  showdigit(4, fourth, false);
-}
-
-
 functions f;
+cclock cc;
 const float heightOfPost = 0.75;
 
 void setup() {
@@ -122,10 +102,8 @@ void setup() {
   dxl.setOperatingMode(DXL_H, OP_CURRENT_BASED_POSITION);
   dxl.torqueOn(DXL_V);
   dxl.torqueOn(DXL_H);
-
-
-
-  //At any time switch is turned OFF turn the device off
+  //At 
+  any time switch is turned OFF turn the device off
   //skip...
 
   //Set acceptable input for each Time set, ...
@@ -136,158 +114,53 @@ void setup() {
   //Input Up Down button
 
   //Set real time (Hour)
-  int hourconfirm = 0;
-  int minuteconfirm = 0;
-  int hour = 0;    //ranges from 0 to 23
-  int minute = 0;  //ranges from 0 to 59
+  int i = 0; //timeconfirm
+  int hour[] = {0,0,0};    //ranges from 0 to 23
+  int minute[] = {0,0,0};  //ranges from 0 to 59
+  //i=0 is current time, i=1 is start time, i = 2 is end time
+  cc.showtime(hour[i], minute[i]);
 
-  showtime(hour, minute);
-
-  while (hourconfirm == 0) {
+  while (i<3) {
+    while (digitalRead(MIDBUT_PIN) != LOW){
     if (digitalRead(UPBUT_PIN) == LOW) {
-      hour++;
-      if (hour == 24) {
-        hour = 0;
+      hour[i]++;
+      if (hour[i] == 24) {
+        hour[i] = 0;
       }
     }
     if (digitalRead(DOWNBUT_PIN) == LOW) {
-      hour--;
-      if (hour == -1) {
-        hour = 23;
+      hour[i]--;
+      if (hour[i] == -1) {
+        hour[i] = 23;
       }
     }
-    if (digitalRead(MIDBUT_PIN) == LOW) {
-      hourconfirm++;
-    }
     // updatedisplay
-    showtime(hour, minute);
-
+    cc.showtime(hour[i], minute[i]);
     delay(200);
   }
-
+  delay(1000);
   //Set time (Minute)
-  while (minuteconfirm == 0) {
+  while (digitalRead(MIDBUT_PIN) != LOW) {
     if (digitalRead(UPBUT_PIN) == LOW) {
-      minute++;
-      if (minute == 60) {
-        minute = 0;
+      minute[i]++;
+      if (minute[i] == 60) {
+        minute[i] = 0;
       }
     }
     if (digitalRead(DOWNBUT_PIN) == LOW) {
-      minute--;
-      if (minute == -1) {
-        minute = 59;
+      minute[i]--;
+      if (minute[i] == -1) {
+        minute[i] = 59;
       }
-    }
-    if (digitalRead(MIDBUT_PIN) == LOW) {
-      minuteconfirm++;
     }
     // updatedisplay
-    showtime(hour, minute);
-
+    cc.showtime(hour[i], minute[i]);
     delay(200);
   }
-
-  //Set time start (Hour)
-  hourconfirm = 0;
-  minuteconfirm = 0;
-
-  int starthour = 0;
-  int startminute = 0;
-  while (hourconfirm == 0) {
-    if (digitalRead(UPBUT_PIN) == LOW) {
-      starthour++;
-      if (starthour == 24) {
-        starthour = 0;
-      }
-    }
-    if (digitalRead(DOWNBUT_PIN) == LOW) {
-      starthour--;
-      if (hour == -1) {
-        hour = 23;
-      }
-    }
-    if (digitalRead(MIDBUT_PIN) == LOW) {
-      hourconfirm++;
-    }
-    // updatedisplay
-    showtime(hour, minute);
-
-    delay(200);
-  }
-
-  //Set time start (Minute)
-  while (minuteconfirm == 0) {
-    if (digitalRead(UPBUT_PIN) == LOW) {
-      startminute++;
-      if (startminute == 60) {
-        startminute = 0;
-      }
-    }
-    if (digitalRead(DOWNBUT_PIN) == LOW) {
-      startminute--;
-      if (startminute == -1) {
-        startminute = 59;
-      }
-    }
-    if (digitalRead(MIDBUT_PIN) == LOW) {
-      minuteconfirm++;
-    }
-    // updatedisplay
-    showtime(hour, minute);
-
-    delay(200);
-  }
-
-  //Set time end (Hour)
-  //Set time end (Minute)
-  hourconfirm = 0;
-  minuteconfirm = 0;
-
-  int endhour = 0;
-  int endminute = 0;
-  while (hourconfirm == 0) {
-    if (digitalRead(UPBUT_PIN) == LOW) {
-      endhour++;
-      if (endhour == 24) {
-        endhour = 0;
-      }
-    }
-    if (digitalRead(DOWNBUT_PIN) == LOW) {
-      endhour--;
-      if (endhour == -1) {
-        endhour = 23;
-      }
-    }
-    if (digitalRead(MIDBUT_PIN) == LOW) {
-      hourconfirm++;
-    }
-    // updatedisplay
-    showtime(hour, minute);
-
-    delay(200);
-  }
-  while (minuteconfirm == 0) {
-    if (digitalRead(UPBUT_PIN) == LOW) {
-      endminute++;
-      if (endminute == 60) {
-        endminute = 0;
-      }
-    }
-    if (digitalRead(DOWNBUT_PIN) == LOW) {
-      endminute--;
-      if (endminute == -1) {
-        endminute = 59;
-      }
-    }
-    if (digitalRead(MIDBUT_PIN) == LOW) {
-      minuteconfirm++;
-    }
-    // updatedisplay
-    showtime(hour, minute);
-
-    delay(200);
-  }
+  delay(1000);
+  if (i==0) setTime(hour[i],minute[i],0,0,0,0);
+  i++;
+}
 
   //Turn the laser on
   digitalWrite(LASERCONTROL_PIN, HIGH);
