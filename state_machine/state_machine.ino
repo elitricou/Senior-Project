@@ -1,5 +1,6 @@
 //State Diagram
 #include "functions.h"
+#include "catclock.h"
 #include <EEPROM.h>
 //includes for Dynamixel
 #include <Dynamixel2Arduino.h>
