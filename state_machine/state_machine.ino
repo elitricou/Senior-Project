@@ -1,6 +1,6 @@
 //State Diagram
 #include "functions.h"
-#include "catclock.h"
+//#include "catclock.h"
 #include <EEPROM.h>
 //includes for Dynamixel
 #include <Dynamixel2Arduino.h>
@@ -35,7 +35,26 @@
 #include <TimeLib.h>
 #include "LedControl.h"
 LedControl lc = LedControl(DISPLAY_PIN, CLK_PIN, CLOCK_CS, 1);
-//byte dig[] = { 0b00111111, 0b00000110, 0b01011011, 0b01001111, 0b01100110, 0b01101101, 0b01111101, 0b00000111, 0b01111111, 0b01100111 };
+byte dig[] = { 0b10111111, 0b10000110, 0b11011011, 0b11001111, 0b11100110, 0b11101101, 0b11111101, 0b10000111, 0b11111111, 0b11100111 };
+
+void showdigit(int pos, int digit) {
+  for (int i = 0; i < 7; i++) {
+    if (bitRead(dig[digit], i)) lc.setLed(0, i, pos, true);
+  }
+}
+
+void showtime(int hours, int mins) {
+  lc.clearDisplay(0);
+
+  int first = hours / 10;
+  int second = hours % 10;
+  int third = mins / 10;
+  int fourth = mins % 10;
+  showdigit(1, first);
+  showdigit(2, second);
+  showdigit(3, third);
+  showdigit(4, fourth);
+}
 
 SoftwareSerial soft_serial(MOTOR_RX, MOTOR_TX);  //UART RX/TX
 #define DXL_SERIAL Serial
@@ -58,7 +77,7 @@ void setMotor(int phi, int theta) {
 }
 
 functions f;
-cclock cc;
+//cclock cc(DISPLAY_PIN, CLK_PIN, CLOCK_CS);
 const float heightOfPost = 0.75;
 
 void setup() {
@@ -103,8 +122,7 @@ void setup() {
   dxl.setOperatingMode(DXL_H, OP_CURRENT_BASED_POSITION);
   dxl.torqueOn(DXL_V);
   dxl.torqueOn(DXL_H);
-  //At 
-  any time switch is turned OFF turn the device off
+  //At any time switch is turned OFF turn the device off
   //skip...
 
   //Set acceptable input for each Time set, ...
@@ -119,7 +137,7 @@ void setup() {
   int hour[] = {0,0,0};    //ranges from 0 to 23
   int minute[] = {0,0,0};  //ranges from 0 to 59
   //i=0 is current time, i=1 is start time, i = 2 is end time
-  cc.showtime(hour[i], minute[i]);
+  showtime(hour[i], minute[i]);
 
   while (i<3) {
     while (digitalRead(MIDBUT_PIN) != LOW){
@@ -136,7 +154,7 @@ void setup() {
       }
     }
     // updatedisplay
-    cc.showtime(hour[i], minute[i]);
+    showtime(hour[i], minute[i]);
     delay(200);
   }
   delay(1000);
@@ -155,7 +173,7 @@ void setup() {
       }
     }
     // updatedisplay
-    cc.showtime(hour[i], minute[i]);
+    showtime(hour[i], minute[i]);
     delay(200);
   }
   delay(1000);
