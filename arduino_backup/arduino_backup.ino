@@ -6,33 +6,27 @@
 #include <Dynamixel2Arduino.h>
 #include <SoftwareSerial.h>
 
-#define LASERCONTROL_PIN PIN_PB0  // output
-#define LiDAR_RXD_PIN PIN_PB1     // input
-#define PRESSURE_PIN PIN_PB2      // input
-#define MOSI_PIN PIN_PB3
-#define MISO_PIN PIN_PB4
-#define SCK_PIN PIN_PB5
-#define MOTOR_DATA_CONTROL PIN_PB6  // output
-#define MOTION_IO_PIN PIN_PB7       // input
+#define MOTOR_RX 0
+#define MOTOR_TX 1
+#define MOTOR_DATA_CONTROL 2  // output
+#define LASERCONTROL_PIN 3  // output
+#define LiDAR_RXD 4     // input
+#define LIDAR_TXD 5
+#define PRESSURE_IO_PIN 6      // input
+#define MOTION_IO_PIN 7       // input
 
-#define UPBUT_PIN PIN_PC0
-#define DOWNBUT_PIN PIN_PC1
-#define RIGHTBUT_PIN PIN_PC2
-#define LEFTBUT_PIN PIN_PC3
-#define MIDBUT_PIN PIN_PC4
-#define CLK_PIN PIN_PC5
-#define RST_PIN PIN_PC6
+#define UPBUT_PIN A0
+#define DOWNBUT_PIN A1
+#define RIGHTBUT_PIN A2
+#define LEFTBUT_PIN A3
+#define MIDBUT_PIN A4
 
-#define LED1_PIN PIN_PD0
-#define LED2_PIN PIN_PD1
-#define CLOCK_CS PIN_PD2
-#define SWITCH_PIN PIN_PD3
-#define DISPLAY_PIN PIN_PD4  //output LED clock
-#define MOTOR_RX PIN_PD5
-#define LIDAR_TXD PIN_PD6
-#define MOTOR_TX PIN_PD7
+#define CLOCK_CS 10
+#define DISPLAY_PIN 11  //output LED clock
+#define CLK_PIN 13
 
-
+SoftwareSerial lidar_serial(LiDAR_RXD,LIDAR_TXD);
+#define LIDAR_SERIAL lidar_serial
 
 #include <TimeLib.h>
 #include "LedControl.h"
