@@ -80,7 +80,14 @@ void setMotor(int phi, int theta) {
 
 functions f;
 //cclock cc(DISPLAY_PIN, CLK_PIN, CLOCK_CS);
+
+//variables
 const float heightOfPost = 0.75;
+int length=48;
+int i=0;
+int j=0;
+
+
 
 void setup() {
 
@@ -311,99 +318,99 @@ void setup() {
   //turn off laser
   digitalWrite(LASERCONTROL_PIN, LOW);
 
-  //Set theta1, theta2, phi1, phi2 (close,far,left,right)
-
-  //LiDAR
-  //scan the area where the laser is allowed to point
-
-  //Turn LiDAR on
-
-  //Horizontal motor will be moving from phi1(Leftmost point) to phi2(Rightmost point)
-  //Vertical motor will be moving from theta1(closest point) to theta2(farthest point)
-
-  //compare LiDAR data with calculated distance for each point
-
 
   //kinematics function here generate array
-  int length = 50;
-  int array[100][50];
-  memset(array, 0, sizeof(array));
-  f.kinematics(length, array, p1_phi, p1_theta, p2_phi, p2_theta, heightOfPost);
-  //write the final array to eeprom
+  int array[48];
+  for (int i = 0; i < length * 2; i++) {
+    memset(array, 0, sizeof(array));
+    f.kinematics(length, array, p1_phi, p1_theta, p2_phi, p2_theta, heightOfPost, i);
+    f.writeArrEeprom(length, array, i);//Write rows to Eeprom one by one
+  }
+  
+  //Set random initial point(from the ones)
+  randomSeed(analogRead(0));
+  i = random(0, 96);
+  j = random(0, 48);
+  f.readArrEeprom(length, array, i);
+  while (array[j] != 1) {
+    i = random(0, 96);
+    j = random(0, 48);
+    f.readArrEeprom(length, array, i);
+  }
 }
 
 
-
-//Upon pressing confirm move to
-//Inactive State
-
-
-
-
-//After calibration is done
-//Upon pressing confirm or reaching the set time move to
-//Active State
-
-//Turn the cat laser on
-//Pathing Algorithm here
-//Move motors
-
-//While in Idle state if pressure is detected move to active state
-
-
+bool begin=false;
+int theta=0;
+int phi=0;
 
 
 void loop() {
-  /*
-  // put your main code here, to run repeatedly:
-  digitalWrite(LASERCONTROL_PIN, HIGH);
-  if (MOTION_IO_PIN == HIGH) {
-    //Turn Laser On
 
+   if(digitalRead(MOTION_IO_PIN) == HIGH /*&& Time*/ ){
+    begin = true;
+  }
 
-    int seed = 0;
-    while (MOTION_IO_PIN == HIGH) {
-      randomSeed(seed);
+  if (digitalRead(MOTION_IO_PIN) == HIGH && begin==true) {
+    //Turn the Laser on
+    digitalWrite(LASERCONTROL_PIN, HIGH);
+    int read_array[48];
+    memset(read_array, 0, sizeof(read_array));
+    int availablePaths = 0;
 
-
-      int s_x = random(0, length);
-      int s_y = random(0, length * 2);
-
-      // Ensure the starting point is on a valid path (1)
-      while (array[s_y][s_x] != 1) {
-        s_x = random(0, length);
-        s_y = random(0, length * 2);
-      }
-      int phi = f.find_Phi(s_x / 10, s_y / 10);
-      int theta = f.find_Theta(s_x / 10, s_y / 10, heightOfPost);
-      setMotor(phi, theta);
-
-      // Loop to generate the path
-      
-      int i = 0;
-      while (i < 10 && MOTION_IO_PIN == HIGH) {
-        i++;
-
-        int adj_array[8][2] = { { s_y - 1, s_x - 1 }, { s_y - 1, s_x }, { s_y - 1, s_x + 1 }, { s_y, s_x - 1 }, { s_y, s_x + 1 }, { s_y + 1, s_x - 1 }, { s_y + 1, s_x }, { s_y + 1, s_x + 1 } };
-
-        // Pick a random point from the adjacent array and set it as the current point
-        // then find the adjacent array for that point.
-        // Repeat these steps until a valid path (1) is found.
-        int adj_point = random(0, 8);
-        s_x = adj_array[adj_point][1];
-        s_y = adj_array[adj_point][0];
-
-        while (array[s_y][s_x] != 1) {
-          adj_point = random(0, 8);
-          s_x = adj_array[adj_point][1];
-          s_y = adj_array[adj_point][0];
-        }
-        int phi = f.find_Phi(s_x / 10, s_y / 10);
-        int theta = f.find_Theta(s_x / 10, s_y / 10, heightOfPost);
-        setMotor(phi, theta)
-        
-        seed++;
-      
+    f.readArrEeprom(length, read_array, i - 1);
+    if (i > 0 && read_array[j] == 1) {
+      availablePaths++;
     }
-  }*/
+    f.readArrEeprom(length, read_array, i + 1);
+    if (i < length*2 - 1 && read_array[j] == 1) {
+      availablePaths++;
+    }
+    f.readArrEeprom(length, read_array, i);
+    if (j > 0 && read_array[j - 1] == 1) {
+      availablePaths++;
+    }
+    if (j < length - 1 && read_array[j + 1] == 1) {
+      availablePaths++;
+    }
+
+    if (availablePaths > 0) {
+      // Randomly select one of the available paths
+      int randomDirection = random(0, availablePaths);
+
+      f.readArrEeprom(length, read_array, i - 1);
+      if (i > 0 && read_array[j] == 1 && randomDirection == 0) {
+        i = i - 1;
+      }
+      f.readArrEeprom(length, read_array, i + 1);
+      if (i < length*2 - 1 && read_array[j] == 1 && randomDirection == 1) {
+        i = i + 1;
+      }
+      f.readArrEeprom(length, read_array, i);
+      if (j > 0 && read_array[j - 1] == 1 && randomDirection == 2) {
+        j = j - 1;
+      }
+      if (j < length - 1 && read_array[j + 1] == 1 && randomDirection == 3) {
+        j = j + 1;
+      }
+    }
+
+    //Testing
+    //f.readArrEeprom(length, read_array, i);
+    //Serial.print(i);
+    //Serial.print(", ");
+    //Serial.println(j);
+    //Serial.println(read_array[j]);
+
+
+    //Now that the next point has been set, we will move the motors
+      theta = f.find_Theta((i - length) / 10.0, j / 10.0, heightOfPost);
+      phi = f.find_Phi((i - length) / 10.0, j / 10.0);
+
+    setMotor(phi, theta);
+    delay(500);
+  }else if (digitalRead(MOTION_IO_PIN)== LOW){
+   //If there is no activity by the cat, turn the laser off
+    digitalWrite(LASERCONTROL_PIN, LOW);
+  }
 }
