@@ -22,7 +22,12 @@ float functions::find_Theta(float X, float Y, float heightOfPost) {
     float distanceFromBase = sqrt(pow(X, 2) + pow(Y, 2));
     return degrees(atan2(heightOfPost, distanceFromBase));
 }
-
+float functions::calcDistance(float row, float col, float heightOfPost){
+  row=row/10;
+  col=col/10;
+  float distfrombase=sqrt(pow(row,2)+pow(col,2));
+  return sqrt(pow(heightOfPost,2)+pow(distfrombase,2));
+}
 functions::Coordinate functions::calculateCoordinates(int phi, int theta, float heightOfPost) {
     Coordinate result;
     result.x = find_X(phi, theta, heightOfPost);
@@ -66,39 +71,5 @@ void functions::kinematics(int length, int array[][50], int p1_phi, int p1_theta
     }
 }
 
-void functions::pathing(int length, int array[][50], int seed) {
 
-  randomSeed(seed);
-
-  // Randomly pick starting point indices
-  int s_x = random(0, length);
-  int s_y = random(0, length * 2);
-
-  // Ensure the starting point is on a valid path (1)
-  while (array[s_y][s_x] != 1) {
-    s_x = random(0, length);
-    s_y = random(0, length * 2);
-  }
-
-  // Loop to generate the path
-  int i = 0;
-  while (i < 10) {
-    i++;
-
-    int adj_array[8][2] = {{s_y - 1, s_x - 1}, {s_y - 1, s_x}, {s_y - 1, s_x + 1}, {s_y, s_x - 1},
-                           {s_y, s_x + 1},     {s_y + 1, s_x - 1}, {s_y + 1, s_x},     {s_y + 1, s_x + 1}};
-
-    // Pick a random point from the adjacent array and set it as the current point
-    // then find the adjacent array for that point.
-    // Repeat these steps until a valid path (1) is found.
-    int adj_point = random(0, 8);
-    s_x = adj_array[adj_point][1];
-    s_y = adj_array[adj_point][0];
-
-    while (array[s_y][s_x] != 1) {
-      adj_point = random(0, 8);
-      s_x = adj_array[adj_point][1];
-      s_y = adj_array[adj_point][0];
-    }
-  }
 }
