@@ -81,13 +81,38 @@ void setMotor(int phi, int theta) {
 functions f;
 //cclock cc(DISPLAY_PIN, CLK_PIN, CLOCK_CS);
 
+#include "TFMini.h"
+TFMini tfmini;
+SoftwareSerial SerialTFMini(LIDAR_RXD, LIDAR_TXD); 
+
+void getTFminiData(int* distance, int* strength)
+{
+  static char i = 0;
+  char j = 0;
+  int checksum = 0;
+  static int rx[9];
+  if (SerialTFMini.available())
+  {
+    rx[i] = SerialTFMini.read();
+    if (rx[0] != 0x59)
+    { i = 0;} else if (i == 1 && rx[1] != 0x59){
+      i = 0;
+    }else if (i == 8){
+      for (j = 0; j < 8; j++)
+      {checksum += rx[j];}
+      if (rx[8] == (checksum % 256))
+      {
+        *distance = rx[2] + rx[3] * 256;
+        *strength = rx[4] + rx[5] * 256;
+      }
+      i = 0;} else{i++;}
+  }
+}
 //variables
 const float heightOfPost = 0.75;
 int length=48;
 int i=0;
 int j=0;
-
-
 
 void setup() {
 
@@ -131,15 +156,6 @@ void setup() {
   dxl.setOperatingMode(DXL_H, OP_CURRENT_BASED_POSITION);
   dxl.torqueOn(DXL_V);
   dxl.torqueOn(DXL_H);
-  //At any time switch is turned OFF turn the device off
-  //skip...
-
-  //Set acceptable input for each Time set, ...
-
-  //Turn On the Device when switch is turned on
-  //skip...
-
-  //Input Up Down button
 
   //Set real time (Hour)
   int i = 0; //timeconfirm
@@ -326,7 +342,25 @@ void setup() {
     f.kinematics(length, array, p1_phi, p1_theta, p2_phi, p2_theta, heightOfPost, i);
     f.writeArrEeprom(length, array, i);//Write rows to Eeprom one by one
   }
-  
+
+  //Lidar
+  int read_array[48];
+  int distance = 0;
+  int strength = 0;
+  for (int i= 0; i < length*2; ++i) {
+    f.readArrEeprom(length, read_array, i);
+    for (int j = 0; j < length; ++j) {
+      if (read_array[j] == 1) {
+        setMotor(phi,theta);
+        getTFminiData(&distance,&strength);
+        int diff= abs(f.calcDistance(i-length, j, heightOfPost)-distance);
+        if(diff>0.06){
+          read_array[j]=0;
+        }
+      }
+    }
+    f.writeArrEeprom(length, read_array, i);
+  }
   //Set random initial point(from the ones)
   randomSeed(analogRead(0));
   i = random(0, 96);
